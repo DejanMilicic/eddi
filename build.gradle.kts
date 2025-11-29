@@ -13,15 +13,22 @@ allprojects {
 }
 
 subprojects {
-    plugins.apply("java-library")
-    
+    apply(plugin = "java-library")
+
+    dependencies {
+        val implementation by configurations
+        implementation("io.arrow-kt:arrow-core:2.2.0")
+        implementation("io.arrow-kt:arrow-fx-coroutines:2.2.0")
+    }
+
     configure<JavaPluginExtension> {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
         }
-        tasks.named<Test>("test") {
-            useJUnitPlatform()
-        }
+    }
+
+    tasks.named<Test>("test") {
+        useJUnitPlatform()
     }
 }
 
