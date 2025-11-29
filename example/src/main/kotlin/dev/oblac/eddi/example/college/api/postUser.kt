@@ -16,18 +16,17 @@ data class StudentRequest(
 fun Routing.apiStudents() {
     post("/api/students") {
         val body = call.receiveText()
-
         val node = Json.fromJson(body, StudentRequest::class)
-
-        val firstName = node.firstName
-        val lastName = node.lastName
 
         Main.commands.launch(
             RegisterStudent(
-                firstName, lastName, "${firstName.lowercase()}.${lastName.lowercase()}@college.edu"
+                node.firstName,
+                node.lastName,
+                "${node.firstName.lowercase()}.${node.lastName.lowercase()}@college.edu"
             )
         )
 
+        //call.respondText("Error", ContentType.Text.Plain, HttpStatusCode.BadRequest)
         call.respondText("Accepted", ContentType.Text.Plain, HttpStatusCode.Accepted)
     }
 }
