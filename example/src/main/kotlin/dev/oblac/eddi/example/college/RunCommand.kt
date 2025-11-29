@@ -11,9 +11,13 @@ fun asyncCommands(es: EventStore) =
 
 private fun commandHandler(es: EventStore) = CommandHandler { command ->
     when (command) {
-        is RegisterStudent ->
-            registerNewStudent(es, command)
-                .map { event -> es.storeEvent(event) }
+        is RegisterStudent -> registerNewStudent(
+            emailExists = { email ->
+                es.findEvents<StudentRegistered>(
+                    StudentRegisteredEvent.NAME,
+                    mapOf("email" to email)
+                ).isNotEmpty() },
+            command = command
+        ).map { event -> es.storeEvent(event) }
     }
 }
-

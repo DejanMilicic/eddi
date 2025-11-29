@@ -1,16 +1,14 @@
 package dev.oblac.eddi.example.college.cmd
 
 import arrow.core.raise.either
-import dev.oblac.eddi.EventStore
 import dev.oblac.eddi.example.college.RegisterStudent
 import dev.oblac.eddi.example.college.StudentRegistered
-import dev.oblac.eddi.example.college.StudentRegisteredEvent
 import arrow.core.raise.ensure
 
 object RegisterNewStudentError
 
-fun registerNewStudent(es: EventStore, command: RegisterStudent) =
-    uniqueStudentEmail(es, command.email)
+fun registerNewStudent(emailExists: (String) -> Boolean, command: RegisterStudent) =
+    uniqueStudentEmail(emailExists, command.email)
         .map {
             StudentRegistered(
                 firstName = command.firstName,
@@ -19,7 +17,9 @@ fun registerNewStudent(es: EventStore, command: RegisterStudent) =
             )
         }
 
-private fun uniqueStudentEmail(es: EventStore, email: String) = either {
-    ensure(es.findEvents<StudentRegistered>(StudentRegisteredEvent.NAME, mapOf("email" to email)).isEmpty())
-        { RegisterNewStudentError }
+private fun uniqueStudentEmail(
+    emailExists: (String) -> Boolean,
+    email: String
+) = either {
+    ensure(!emailExists(email)) { RegisterNewStudentError }
 }
