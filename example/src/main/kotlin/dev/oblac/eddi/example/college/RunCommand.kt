@@ -11,7 +11,9 @@ fun asyncCommands(es: EventStore) =
 
 private fun commandHandler(es: EventStore) = CommandHandler { command ->
     when (command) {
-        is RegisterStudent -> registerNewStudent(es, command)
+        is RegisterStudent ->
+            registerNewStudent(es, command)
+                .map { event -> es.storeEvent(event) }
     }
 }
 
