@@ -1,22 +1,17 @@
 package dev.oblac.eddi.example.college.cmd
 
-import dev.oblac.eddi.EventEnvelope
+import arrow.core.Either
+import arrow.core.raise.either
 import dev.oblac.eddi.EventStore
 import dev.oblac.eddi.example.college.RegisterStudent
 import dev.oblac.eddi.example.college.StudentRegistered
 import dev.oblac.eddi.example.college.StudentRegisteredEvent
+import arrow.core.raise.ensure
 
-/**
- * Registers a new student.
- */
-fun registerNewStudent(es: EventStore, command: RegisterStudent) {
+object RegisterNewStudentError
 
-    studentsWithSameEmail(es, command.email)
-        .firstOrNull()
-        ?.let {
-            println("Student with this email already registered, do not register again.")
-            return
-        }
+fun registerNewStudent(es: EventStore, command: RegisterStudent): Either<RegisterNewStudentError, Unit> = either {
+    uniqueEmail(es, command.email).bind()
 
     es.storeEvent(
         StudentRegistered(
@@ -27,8 +22,8 @@ fun registerNewStudent(es: EventStore, command: RegisterStudent) {
     )
 }
 
-private fun studentsWithSameEmail(
-    es: EventStore,
-    email: String
-): List<EventEnvelope<StudentRegistered>> =
-    es.findEvents(StudentRegisteredEvent.NAME, mapOf("email" to email))
+private fun uniqueEmail(es: EventStore, email: String): Either<RegisterNewStudentError, Unit> = either {
+    ensure(es.findEvents<StudentRegistered>(StudentRegisteredEvent.NAME, mapOf("email" to email)).isEmpty()) {
+        RegisterNewStudentError
+    }
+}
