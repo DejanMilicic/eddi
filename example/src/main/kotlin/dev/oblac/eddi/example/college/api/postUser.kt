@@ -1,5 +1,8 @@
 package dev.oblac.eddi.example.college.api
 
+import arrow.core.Either
+import dev.oblac.eddi.CommandError
+import dev.oblac.eddi.db.DbEventStore
 import dev.oblac.eddi.example.college.Main
 import dev.oblac.eddi.example.college.RegisterStudent
 import dev.oblac.eddi.json.Json
@@ -18,15 +21,46 @@ fun Routing.apiStudents() {
         val body = call.receiveText()
         val node = Json.fromJson(body, StudentRequest::class)
 
-        Main.commands.launch(
-            RegisterStudent(
-                node.firstName,
-                node.lastName,
-                "${node.firstName.lowercase()}.${node.lastName.lowercase()}@college.edu"
-            )
+        val command = RegisterStudent(
+            node.firstName,
+            node.lastName,
+            "${node.firstName.lowercase()}.${node.lastName.lowercase()}@college.edu"
         )
 
-        //call.respondText("Error", ContentType.Text.Plain, HttpStatusCode.BadRequest)
-        call.respondText("Accepted", ContentType.Text.Plain, HttpStatusCode.Accepted)
+        println("About to invoke command: $command")
+
+        try {
+            val result: Either<CommandError, Unit> = Main.commands(command)
+
+            println("Result: $result")
+
+            result.fold(
+                ifLeft = { error ->
+                    println("Error occurred: $error")
+                    call.respondText("$error", ContentType.Text.Plain, HttpStatusCode.BadRequest)
+                },
+                ifRight = {
+                    println("Success!")
+                    call.respondText("Accepted", ContentType.Text.Plain, HttpStatusCode.Accepted)
+                }
+            )
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            e.printStackTrace()
+            call.respondText("Exception: ${e.message}", ContentType.Text.Plain, HttpStatusCode.InternalServerError)
+        }
+
+//        val result = Main.commands.invoke<Unit>(command)
+//
+//        println("Result: $result")
+//
+//        result.fold(
+//            ifLeft = { error ->
+//                call.respondText("Error: $error", ContentType.Text.Plain, HttpStatusCode.BadRequest)
+//            },
+//            ifRight = {
+//                call.respondText("Accepted", ContentType.Text.Plain, HttpStatusCode.Accepted)
+//            }
+//        )
     }
 }

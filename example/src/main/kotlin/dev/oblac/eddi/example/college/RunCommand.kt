@@ -21,9 +21,10 @@ private fun commandHandler(es: EventStore) = commandHandler { command ->
                 ).isNotEmpty()
             },
             command
-            ).map { event ->
-                es.storeEvent(event)
-            }
+        ).map { event ->
+            es.storeEvent(event)
+            Unit
+        }
         else -> {
             println("Unknown command: $command")
             Either.Left(UnknownCommandError(command))

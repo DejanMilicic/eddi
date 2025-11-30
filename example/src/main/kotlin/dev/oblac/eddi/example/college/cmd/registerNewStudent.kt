@@ -8,7 +8,9 @@ import arrow.core.raise.ensure
 import dev.oblac.eddi.CommandError
 import dev.oblac.eddi.Seq
 
-object RegisterNewStudentError
+object RegisterNewStudentError : CommandError {
+    override fun toString(): String = "Student with this email already exists"
+}
 
 fun registerNewStudent(emailExists: (String) -> Boolean, command: RegisterStudent): Either<CommandError, StudentRegistered> =
     uniqueStudentEmail(emailExists, command.email)
