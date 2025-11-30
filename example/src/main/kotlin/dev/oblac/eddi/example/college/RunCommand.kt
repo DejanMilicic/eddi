@@ -18,8 +18,12 @@ private fun commandHandler(es: EventStore) = commandHandler { command ->
                 es.findEvents<StudentRegistered>(
                     StudentRegisteredEvent.NAME,
                     mapOf("email" to email)
-                ).isNotEmpty() },
-            command)
+                ).isNotEmpty()
+            },
+            command
+            ).map { event ->
+                es.storeEvent(event)
+            }
         else -> {
             println("Unknown command: $command")
             Either.Left(UnknownCommandError(command))
